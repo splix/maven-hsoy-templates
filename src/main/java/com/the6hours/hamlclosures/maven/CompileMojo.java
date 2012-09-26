@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Igor Artamonov (http://igorartamonov.com)
  * @since 23.09.12
  */
-public class CompileMojo extends AbstractMojo {
+public class CompileMojo extends AbstractMojo implements Runnable{
 
     /**
      * The haml-closure files to be compiled into javascript files.
@@ -58,7 +59,55 @@ public class CompileMojo extends AbstractMojo {
      */
     private File outputFile;
 
+    /**
+     * Refresh period, in seconds
+     *
+     * @parameter property="refreshPeriod" default-value="5"
+     */
+    private int refreshPeriod = 5;
+
+    private Date lastCompiled;
+
+    private List<File> watch;
+
+    private boolean alive = true;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
+        compile();
+
+        Thread refresh = new Thread(this);
+        refresh.start();
+    }
+
+    private boolean isModified() {
+        if (watch == null) {
+            return false;
+        }
+        for (File f: watch) {
+            if (!f.exists()) {
+                return true;
+            }
+            if (f.lastModified() > lastCompiled.getTime()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void run() {
+        while (alive) {
+            try {
+                Thread.sleep(1000L * refreshPeriod);
+            } catch (InterruptedException e) {
+                getLog().warn("Sleep interrupted");
+            }
+            if (isModified()) {
+                compile();
+            }
+        }
+    }
+
+    private void compile() {
         getLog().info("Compile HAML-closures...");
 
         FileSetManager fileSetManager = new FileSetManager(getLog());
@@ -72,8 +121,11 @@ public class CompileMojo extends AbstractMojo {
             files.add(soyFile);
         }
 
+        this.watch = files;
+
         HsoyJsCompiler hsoyJsCompiler = new HsoyJsCompiler();
         SoyFileSet soyFileSet;
+        this.lastCompiled = new Date();
         try {
             soyFileSet = hsoyJsCompiler.build(files);
         } catch (HsoyFormatException e) {
@@ -91,7 +143,7 @@ public class CompileMojo extends AbstractMojo {
         Writer writer = null;
         try {
             if (outputFile.createNewFile()) {
-              getLog().info("Created new file: " + outputFile);
+                getLog().info("Created new file: " + outputFile);
             }
             writer = new FileWriter(outputFile);
             for (String compiled: compiledSrcs) {
@@ -122,5 +174,9 @@ public class CompileMojo extends AbstractMojo {
 
     public void setOutputFile(File outputFile) {
         this.outputFile = outputFile;
+    }
+
+    public void setRefreshPeriod(int refreshPeriod) {
+        this.refreshPeriod = refreshPeriod;
     }
 }
