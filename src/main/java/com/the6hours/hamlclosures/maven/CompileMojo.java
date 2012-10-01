@@ -1,6 +1,7 @@
 package com.the6hours.hamlclosures.maven;
 
 import com.google.template.soy.SoyFileSet;
+import com.google.template.soy.base.SoySyntaxException;
 import com.google.template.soy.jssrc.SoyJsSrcOptions;
 import com.the6hours.hamlclosures.HsoyFormatException;
 import com.the6hours.hamlclosures.HsoyJsCompiler;
@@ -66,6 +67,10 @@ public class CompileMojo extends AbstractMojo implements Runnable{
      */
     private int refreshPeriod = 5;
 
+    // ============
+    // local fields
+    // ============
+
     private Date lastCompiled;
 
     private List<File> watch;
@@ -129,7 +134,7 @@ public class CompileMojo extends AbstractMojo implements Runnable{
         try {
             soyFileSet = hsoyJsCompiler.build(files);
         } catch (HsoyFormatException e) {
-            getLog().error("Invalid format", e);
+            getLog().error("Invalid hsoy format", e);
             return;
         } catch (IOException e) {
             getLog().error("Can't read files", e);
@@ -139,7 +144,13 @@ public class CompileMojo extends AbstractMojo implements Runnable{
         SoyJsSrcOptions jsSrcOptions = new SoyJsSrcOptions();
         jsSrcOptions.setShouldProvideRequireSoyNamespaces(shouldProvideRequireSoyNamespaces);
         jsSrcOptions.setShouldGenerateJsdoc(shouldGenerateJsdoc);
-        List<String> compiledSrcs = soyFileSet.compileToJsSrc(jsSrcOptions, null);
+        List<String> compiledSrcs;
+        try {
+            compiledSrcs = soyFileSet.compileToJsSrc(jsSrcOptions, null);
+        } catch (SoySyntaxException e) {
+            getLog().error("Invalid soy format", e);
+            return;
+        }
         Writer writer = null;
         try {
             if (outputFile.createNewFile()) {
