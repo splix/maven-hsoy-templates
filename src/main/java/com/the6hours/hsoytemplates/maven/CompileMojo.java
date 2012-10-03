@@ -1,10 +1,10 @@
-package com.the6hours.hamlclosures.maven;
+package com.the6hours.hsoytemplates.maven;
 
 import com.google.template.soy.SoyFileSet;
 import com.google.template.soy.base.SoySyntaxException;
 import com.google.template.soy.jssrc.SoyJsSrcOptions;
-import com.the6hours.hamlclosures.HsoyFormatException;
-import com.the6hours.hamlclosures.HsoyJsCompiler;
+import com.the6hours.hsoytemplates.HsoyFormatException;
+import com.the6hours.hsoytemplates.HsoyJsCompiler;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;

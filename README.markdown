@@ -1,9 +1,9 @@
-Maven Plugin for HAML Closures
-==============================
+Maven Plugin for Hsoy Templates
+===============================
 
-A Maven 3.0 plugin for compiling HAML Closures into JS
+A Maven 3.0 plugin for compiling Hsoy templates (Google Closure Templates) into JS
 
-Latest versions: `0.1` for stable version, or `0.2-SNAPSHOT` for development
+Latest versions: `0.2` for stable version, or `0.3-SNAPSHOT` for development
 
 Usage
 -----
@@ -11,7 +11,8 @@ Usage
 ```xml
 <plugin>
     <groupId>com.the6hours</groupId>
-    <artifactId>maven-haml-closures</artifactId>
+    <artifactId>maven-hsoy-templates</artifactId>
+    <version>0.2</version>
     <executions>
         <execution>
             <goals>
