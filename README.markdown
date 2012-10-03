@@ -3,6 +3,8 @@ Maven Plugin for HAML Closures
 
 A Maven 3.0 plugin for compiling HAML Closures into JS
 
+Latest versions: `0.1` for stable version, or `0.2-SNAPSHOT` for development
+
 Usage
 -----
 
@@ -28,6 +30,21 @@ Usage
     </configuration>
 </plugin>
 ```
+
+Also you need to add 'The 6 Hours' Maven repository:
+
+```xml
+<pluginRepositories>
+    <pluginRepository>
+        <id>the6hours-release</id>
+        <url>http://maven.the6hours.com/release</url>
+        <releases><enabled>true</enabled></releases>
+        <snapshots><enabled>false</enabled></snapshots>
+    </pluginRepository>
+</pluginRepositories>
+```
+
+Snapshot repo is located at `http://maven.the6hours.com/snapshot`
 
 License
 -------
