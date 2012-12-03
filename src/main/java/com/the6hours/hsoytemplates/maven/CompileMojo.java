@@ -151,6 +151,16 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             getLog().error("Invalid soy format", e);
             return;
         }
+        File outputDir = outputFile.getParentFile();
+        if (!outputFile.exists()) {
+            getLog().info("Create directory: " + outputDir);
+            if (!outputDir.mkdirs()) {
+                getLog().error("Failed to create directory " + outputDir);
+            }
+        } else if (!outputDir.isDirectory()) {
+            getLog().error("Parent directory is a plain file: " + outputDir);
+            return;
+        }
         Writer writer = null;
         try {
             if (outputFile.createNewFile()) {
