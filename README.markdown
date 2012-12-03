@@ -1,12 +1,12 @@
 Maven Plugin for Hsoy Templates
 ===============================
 
-A Maven 3.0 plugin for compiling Hsoy templates (Google Closure Templates) into JS
+A Maven 3.0 plugin for compiling Hsoy Templates into JS
 
 Latest versions: `0.2` for stable version, or `0.3-SNAPSHOT` for development
 
-Usage
------
+Add to your project
+-------------------
 
 ```xml
 <plugin>
@@ -46,6 +46,19 @@ Also you need to add 'The 6 Hours' Maven repository:
 ```
 
 Snapshot repo is located at `http://maven.the6hours.com/snapshot`
+
+Usage
+-----
+
+Hsoy Templates going to be compiled by default on each compilation
+```
+mvn compile
+```
+
+Or you can compile Hsoy Templates to JS w/o compiling whole project:
+```
+mvn hsoy-templates:compile
+```
 
 License
 -------
