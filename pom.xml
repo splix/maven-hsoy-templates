@@ -4,14 +4,14 @@
 
     <groupId>com.the6hours</groupId>
     <artifactId>maven-hsoy-templates</artifactId>
-    <version>0.2</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>maven-hsoy-templates Maven Plugin</name>
     <url>https://github.com/splix/maven-hsoy-templates</url>
 
     <description>
-        Maven plugin for HSOY tempales (Google Closure Tempaltes with HAML syntax)
+        Maven plugin for HSOY templates (Google Closure Templates with HAML syntax)
     </description>
     <licenses>
         <license>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>com.the6hours</groupId>
             <artifactId>hsoy-templates</artifactId>
-            <version>0.2</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
