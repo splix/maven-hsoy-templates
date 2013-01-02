@@ -1,9 +1,8 @@
 package com.the6hours.hsoytemplates.maven;
 
 import com.google.template.soy.SoyFileSet;
-import com.google.template.soy.base.SoySyntaxException;
-import com.google.template.soy.jssrc.SoyJsSrcOptions;
 import com.the6hours.hsoytemplates.HsoyFormatException;
+import com.the6hours.hsoytemplates.HsoyJavaCompiler;
 import com.the6hours.hsoytemplates.HsoyJsCompiler;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -54,11 +53,18 @@ public class CompileMojo extends AbstractMojo implements Runnable{
     private boolean shouldGenerateJsdoc;
 
     /**
-     * Output file
+     * Output Javascript file
      *
-     * @parameter property="outputFile"
+     * @parameter property="outputJavascriptFile"
      */
-    private File outputFile;
+    private File outputJavascriptFile;
+
+    /**
+     * Output Java dir
+     *
+     * @parameter property="outputJavaDir"
+     */
+    private File outputJavaDir;
 
     /**
      * Refresh period, in seconds
@@ -66,6 +72,34 @@ public class CompileMojo extends AbstractMojo implements Runnable{
      * @parameter property="refreshPeriod" default-value="5"
      */
     private int refreshPeriod = 5;
+
+    /**
+     * Enable JS generator
+     *
+     * @parameter property="generateJavascript" default-value="true"
+     */
+    private boolean generateJavascript = true;
+
+    /**
+     * Enable Java generator
+     *
+     * @parameter property="generateJava" default-value="true"
+     */
+    private boolean generateJava = true;
+
+    /**
+     * Setup package for generated Java classes
+     *
+     * @parameter property="javaPackage" default-value="hsoy"
+     */
+    private String javaPackage = "hsoy";
+
+    /**
+     * Setup class name for generated Java classes
+     *
+     * @parameter property="javaClass" default-value="HsoyTemplates"
+     */
+    private String javaClass = "HsoyTemplates";
 
     // ============
     // local fields
@@ -140,19 +174,22 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             getLog().error("Can't read files", e);
             return;
         }
-
-        SoyJsSrcOptions jsSrcOptions = new SoyJsSrcOptions();
-        jsSrcOptions.setShouldProvideRequireSoyNamespaces(shouldProvideRequireSoyNamespaces);
-        jsSrcOptions.setShouldGenerateJsdoc(shouldGenerateJsdoc);
-        List<String> compiledSrcs;
-        try {
-            compiledSrcs = soyFileSet.compileToJsSrc(jsSrcOptions, null);
-        } catch (SoySyntaxException e) {
-            getLog().error("Invalid soy format", e);
-            return;
+        if (generateJavascript) {
+            compileJs(soyFileSet);
         }
-        File outputDir = outputFile.getParentFile();
-        if (!outputFile.exists()) {
+        if (generateJava) {
+            compileJava(soyFileSet);
+        }
+    }
+
+    public void compileJs(SoyFileSet soyFileSet) {
+        getLog().debug("Generate Javascript");
+        HsoyJsCompiler jsCompiler = new HsoyJsCompiler();
+        jsCompiler.setShouldGenerateJsdoc(shouldGenerateJsdoc);
+        jsCompiler.setShouldProvideRequireSoyNamespaces(shouldProvideRequireSoyNamespaces);
+
+        File outputDir = outputJavascriptFile.getParentFile();
+        if (!outputJavascriptFile.exists()) {
             getLog().info("Create directory: " + outputDir);
             if (!outputDir.mkdirs()) {
                 getLog().error("Failed to create directory " + outputDir);
@@ -163,15 +200,57 @@ public class CompileMojo extends AbstractMojo implements Runnable{
         }
         Writer writer = null;
         try {
+            if (outputJavascriptFile.createNewFile()) {
+                getLog().info("Created new file: " + outputJavascriptFile);
+            }
+            writer = new FileWriter(outputJavascriptFile);
+            String js = jsCompiler.compileToString(soyFileSet);
+            writer.write(js);
+            writer.flush();
+        } catch (IOException e) {
+            getLog().error("Can't generate JS file", e);
+        } catch (HsoyFormatException e) {
+            getLog().error("Invalid Hsoy", e);
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e1) {
+                }
+            }
+        }
+    }
+
+    public void compileJava(SoyFileSet soyFileSet) {
+        getLog().debug("Generate Java");
+        HsoyJavaCompiler javaCompiler = new HsoyJavaCompiler();
+        javaCompiler.setTargetClass(javaClass);
+        javaCompiler.setTargetPackage(javaPackage);
+
+        if (!outputJavaDir.exists()) {
+            getLog().info("Create directory: " + outputJavaDir);
+            if (!outputJavaDir.mkdirs()) {
+                getLog().error("Failed to create directory " + outputJavaDir);
+            }
+        } else if (!outputJavaDir.isDirectory()) {
+            getLog().error("Parent directory is a plain file: " + outputJavaDir);
+            return;
+        }
+        File outputFile = new File(outputJavaDir, javaClass + ".java");
+        Writer writer = null;
+        try {
             if (outputFile.createNewFile()) {
                 getLog().info("Created new file: " + outputFile);
             }
             writer = new FileWriter(outputFile);
-            for (String compiled: compiledSrcs) {
-                writer.write(compiled);
-                writer.flush();
-            }
+            String js = javaCompiler.compileToString(soyFileSet);
+            writer.write(js);
+            writer.flush();
         } catch (IOException e) {
+            getLog().error("Can't generate JS file", e);
+        } catch (HsoyFormatException e) {
+            getLog().error("Invalid Hsoy", e);
+        } finally {
             if (writer != null) {
                 try {
                     writer.close();
@@ -193,11 +272,31 @@ public class CompileMojo extends AbstractMojo implements Runnable{
         this.shouldGenerateJsdoc = shouldGenerateJsdoc;
     }
 
-    public void setOutputFile(File outputFile) {
-        this.outputFile = outputFile;
-    }
-
     public void setRefreshPeriod(int refreshPeriod) {
         this.refreshPeriod = refreshPeriod;
+    }
+
+    public void setOutputJavascriptFile(File outputJavascriptFile) {
+        this.outputJavascriptFile = outputJavascriptFile;
+    }
+
+    public void setOutputJavaDir(File outputJavaDir) {
+        this.outputJavaDir = outputJavaDir;
+    }
+
+    public void setGenerateJavascript(boolean generateJavascript) {
+        this.generateJavascript = generateJavascript;
+    }
+
+    public void setGenerateJava(boolean generateJava) {
+        this.generateJava = generateJava;
+    }
+
+    public void setJavaPackage(String javaPackage) {
+        this.javaPackage = javaPackage;
+    }
+
+    public void setJavaClass(String javaClass) {
+        this.javaClass = javaClass;
     }
 }
