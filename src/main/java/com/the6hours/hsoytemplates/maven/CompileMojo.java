@@ -174,10 +174,10 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             getLog().error("Can't read files", e);
             return;
         }
-        if (generateJavascript) {
+        if (generateJavascript && outputJavascriptFile != null) {
             compileJs(soyFileSet);
         }
-        if (generateJava) {
+        if (generateJava && outputJavaDir != null) {
             compileJava(soyFileSet);
         }
     }
