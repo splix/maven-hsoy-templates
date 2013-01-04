@@ -11,10 +11,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.shared.model.fileset.FileSet;
 import org.apache.maven.shared.model.fileset.util.FileSetManager;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -203,7 +200,7 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             if (outputJavascriptFile.createNewFile()) {
                 getLog().info("Created new file: " + outputJavascriptFile);
             }
-            writer = new FileWriter(outputJavascriptFile);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputJavascriptFile), "UTF-8"));
             String js = jsCompiler.compileToString(soyFileSet);
             writer.write(js);
             writer.flush();
@@ -242,7 +239,7 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             if (outputFile.createNewFile()) {
                 getLog().info("Created new file: " + outputFile);
             }
-            writer = new FileWriter(outputFile);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
             String js = javaCompiler.compileToString(soyFileSet);
             writer.write(js);
             writer.flush();
