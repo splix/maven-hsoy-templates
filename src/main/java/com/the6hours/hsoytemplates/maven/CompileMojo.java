@@ -1,5 +1,6 @@
 package com.the6hours.hsoytemplates.maven;
 
+import com.cadrlife.jhaml.JHamlParseException;
 import com.google.template.soy.SoyFileSet;
 import com.the6hours.hsoytemplates.HsoyFormatException;
 import com.the6hours.hsoytemplates.HsoyJavaCompiler;
@@ -166,6 +167,9 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             soyFileSet = hsoyJsCompiler.build(files);
         } catch (HsoyFormatException e) {
             getLog().error("Invalid hsoy format", e);
+            return;
+        } catch (JHamlParseException e) {
+            getLog().error("Invalid HAML format", e);
             return;
         } catch (IOException e) {
             getLog().error("Can't read files", e);
