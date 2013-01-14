@@ -2,6 +2,7 @@ package com.the6hours.hsoytemplates.maven;
 
 import com.cadrlife.jhaml.JHamlParseException;
 import com.google.template.soy.SoyFileSet;
+import com.google.template.soy.base.SoySyntaxException;
 import com.the6hours.hsoytemplates.HsoyFormatException;
 import com.the6hours.hsoytemplates.HsoyJavaCompiler;
 import com.the6hours.hsoytemplates.HsoyJsCompiler;
@@ -210,8 +211,12 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             writer.flush();
         } catch (IOException e) {
             getLog().error("Can't generate JS file", e);
+        } catch (SoySyntaxException e) {
+            getLog().error("Invalid Soy", e);
         } catch (HsoyFormatException e) {
             getLog().error("Invalid Hsoy", e);
+        } catch (Exception e) {
+            getLog().error("Cannot compile Java code for Hsoy Template", e);
         } finally {
             if (writer != null) {
                 try {
@@ -249,8 +254,12 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             writer.flush();
         } catch (IOException e) {
             getLog().error("Can't generate JS file", e);
+        } catch (SoySyntaxException e) {
+            getLog().error("Invalid Soy", e);
         } catch (HsoyFormatException e) {
             getLog().error("Invalid Hsoy", e);
+        } catch (Exception e) {
+            getLog().error("Cannot compile Java code for Hsoy Template", e);
         } finally {
             if (writer != null) {
                 try {
