@@ -1,9 +1,9 @@
 Maven Plugin for Hsoy Templates
 ===============================
 
-A Maven 3.0 plugin for compiling Hsoy Templates into JS
+A Maven 3.0 plugin for compiling Hsoy Templates into Javascript and Java
 
-Latest versions: `0.2` for stable version, or `0.3-SNAPSHOT` for development
+Latest versions: `0.3` for stable version, or `0.4-SNAPSHOT` for development
 
 Add to your project
 -------------------
@@ -12,7 +12,7 @@ Add to your project
 <plugin>
     <groupId>com.the6hours</groupId>
     <artifactId>maven-hsoy-templates</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
     <executions>
         <execution>
             <goals>
