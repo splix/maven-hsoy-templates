@@ -146,7 +146,7 @@ public class CompileMojo extends AbstractMojo implements Runnable{
     }
 
     private void compile() {
-        getLog().info("Compile HAML-closures...");
+        getLog().info("Compile Hsoy Templates");
 
         FileSetManager fileSetManager = new FileSetManager(getLog());
         List<File> files = new ArrayList<File>();
