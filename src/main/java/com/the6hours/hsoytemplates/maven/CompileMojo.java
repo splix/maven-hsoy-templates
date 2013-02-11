@@ -100,6 +100,14 @@ public class CompileMojo extends AbstractMojo implements Runnable{
      */
     private String javaClass = "HsoyTemplates";
 
+    /**
+     * Add content of specified file will be used as a template for generated JS
+     *
+     * @parameter property="jsTemplate"
+     */
+    private File jsTemplate = null;
+
+
     // ============
     // local fields
     // ============
@@ -200,14 +208,59 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             getLog().error("Parent directory is a plain file: " + outputDir);
             return;
         }
+        List<String> header = new ArrayList<String>();
+        List<String> footer = new ArrayList<String>();
+        if (jsTemplate != null) {
+            if (jsTemplate.exists() && jsTemplate.isFile()) {
+                boolean foundMarker = false;
+                BufferedReader rdr = null;
+                try {
+                    rdr = new BufferedReader(new FileReader(jsTemplate));
+                    String line;
+                    List<String> buffer = header;
+                    while ((line = rdr.readLine()) != null ) {
+                        String clean = line.trim().replaceAll("\\s", "");
+                        if (clean.equalsIgnoreCase("//HSOY")) {
+                            foundMarker = true;
+                            buffer = footer;
+                        } else {
+                            buffer.add(line);
+                        }
+                    }
+                } catch (IOException e) {
+                    getLog().warn("Can't read JS Template", e);
+                } finally {
+                    if (rdr != null) {
+                        try {
+                            rdr.close();
+                        } catch (IOException e) {
+                            getLog().warn("Can't close JS Template file", e);
+                        }
+                    }
+                }
+                if (!foundMarker) {
+                    getLog().warn("Didn't find Hsoy Template marker (a line '//HSOY') inside template: " + jsTemplate.getAbsolutePath());
+                }
+            } else {
+                getLog().warn("Can't read JS Template, file doesn't exist or not a file: " + jsTemplate.getAbsolutePath());
+            }
+        }
         Writer writer = null;
         try {
             if (outputJavascriptFile.createNewFile()) {
                 getLog().info("Created new file: " + outputJavascriptFile);
             }
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputJavascriptFile), "UTF-8"));
+            for(String line: header) {
+                writer.write(line);
+                writer.write("\n");
+            }
             String js = jsCompiler.compileToString(soyFileSet);
             writer.write(js);
+            for(String line: footer) {
+                writer.write(line);
+                writer.write("\n");
+            }
             writer.flush();
         } catch (IOException e) {
             getLog().error("Can't generate JS file", e);
@@ -308,5 +361,9 @@ public class CompileMojo extends AbstractMojo implements Runnable{
 
     public void setJavaClass(String javaClass) {
         this.javaClass = javaClass;
+    }
+
+    public void setJsTemplate(File jsTemplate) {
+        this.jsTemplate = jsTemplate;
     }
 }
