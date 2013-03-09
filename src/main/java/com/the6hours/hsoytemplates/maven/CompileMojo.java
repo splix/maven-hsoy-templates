@@ -17,6 +17,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -26,7 +27,9 @@ import java.util.List;
  * @author Igor Artamonov (http://igorartamonov.com)
  * @since 23.09.12
  */
-public class CompileMojo extends AbstractMojo implements Runnable{
+public class CompileMojo extends AbstractMojo implements Runnable {
+
+    private static final Pattern HSOY_FILE = Pattern.compile("(\\.hsoy)$");
 
     /**
      * The haml-closure files to be compiled into javascript files.
@@ -57,6 +60,13 @@ public class CompileMojo extends AbstractMojo implements Runnable{
      * @parameter property="outputJavascriptFile"
      */
     private File outputJavascriptFile;
+
+    /**
+     * Output Javascript dir
+     *
+     * @parameter property="outputJavascriptDir"
+     */
+    private File outputJavascriptDir;
 
     /**
      * Output Java dir
@@ -170,10 +180,10 @@ public class CompileMojo extends AbstractMojo implements Runnable{
         this.watch = files;
 
         HsoyJsCompiler hsoyJsCompiler = new HsoyJsCompiler();
-        SoyFileSet soyFileSet;
+        SoyFileSet soyAllFilesSet;
         this.lastCompiled = new Date();
         try {
-            soyFileSet = hsoyJsCompiler.build(files);
+            soyAllFilesSet = hsoyJsCompiler.build(files);
         } catch (HsoyFormatException e) {
             getLog().error("Invalid hsoy format", e);
             return;
@@ -184,22 +194,57 @@ public class CompileMojo extends AbstractMojo implements Runnable{
             getLog().error("Can't read files", e);
             return;
         }
+
         if (generateJavascript && outputJavascriptFile != null) {
-            compileJs(soyFileSet);
+            compileJs(soyAllFilesSet);
+        } else if (generateJavascript && outputJavascriptDir != null) {
+            for (File file: files) {
+                SoyFileSet soy;
+                try {
+                    soy = hsoyJsCompiler.build(file);
+                } catch (HsoyFormatException e) {
+                    getLog().error("Invalid hsoy format", e);
+                    return;
+                } catch (JHamlParseException e) {
+                    getLog().error("Invalid HAML format", e);
+                    return;
+                } catch (IOException e) {
+                    getLog().error("Can't read files", e);
+                    return;
+                }
+                compileJs(soy, targetFile(file, outputJavascriptDir, generateFilename(file.getName(), ".js")));
+            }
         }
         if (generateJava && outputJavaDir != null) {
-            compileJava(soyFileSet);
+            compileJava(soyAllFilesSet);
         }
     }
 
+    private File targetFile(File src, File targetBaseDir, String filename) {
+        File srcDir = src.getParentFile();
+        File baseDir = new File(inputFiles.getDirectory());
+        String subpath = srcDir.getAbsolutePath().substring(baseDir.getAbsolutePath().length());
+        File targetDir = new File(targetBaseDir, subpath);
+        return new File(targetDir, filename);
+    }
+
+
+    private String generateFilename(String src, String suffix) {
+        return HSOY_FILE.matcher(src).replaceAll(suffix);
+    }
+
     public void compileJs(SoyFileSet soyFileSet) {
+        compileJs(soyFileSet, outputJavascriptFile);
+    }
+
+    public void compileJs(SoyFileSet soyFileSet, File outputJavascriptFile) {
         getLog().debug("Generate Javascript");
         HsoyJsCompiler jsCompiler = new HsoyJsCompiler();
         jsCompiler.setShouldGenerateJsdoc(shouldGenerateJsdoc);
         jsCompiler.setShouldProvideRequireSoyNamespaces(shouldProvideRequireSoyNamespaces);
 
         File outputDir = outputJavascriptFile.getParentFile();
-        if (!outputJavascriptFile.exists()) {
+        if (!outputDir.exists()) {
             getLog().info("Create directory: " + outputDir);
             if (!outputDir.mkdirs()) {
                 getLog().error("Failed to create directory " + outputDir);
@@ -341,6 +386,10 @@ public class CompileMojo extends AbstractMojo implements Runnable{
 
     public void setOutputJavascriptFile(File outputJavascriptFile) {
         this.outputJavascriptFile = outputJavascriptFile;
+    }
+
+    public void setOutputJavascriptDir(File outputJavascriptDir) {
+        this.outputJavascriptDir = outputJavascriptDir;
     }
 
     public void setOutputJavaDir(File outputJavaDir) {
