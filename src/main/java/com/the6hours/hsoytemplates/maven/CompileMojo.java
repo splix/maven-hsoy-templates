@@ -295,7 +295,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
                     List<String> buffer = header;
                     while ((line = rdr.readLine()) != null ) {
                         String clean = line.trim().replaceAll("\\s", "");
-                        if (clean.equalsIgnoreCase("//HSOY")) {
+                        if (clean.equals("$hsoy.body") || clean.equals("$hsoy.body;")) {
                             foundMarker = true;
                             buffer = footer;
                         } else {
