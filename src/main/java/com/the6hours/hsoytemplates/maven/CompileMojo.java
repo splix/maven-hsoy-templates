@@ -125,7 +125,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
      *
      * @parameter property="javascriptTemplate"
      */
-    private File jsTemplate = null;
+    private File javascriptTemplate = null;
 
 
     // ============
@@ -285,12 +285,12 @@ public class CompileMojo extends AbstractMojo implements Runnable {
         }
         List<String> header = new ArrayList<String>();
         List<String> footer = new ArrayList<String>();
-        if (jsTemplate != null) {
-            if (jsTemplate.exists() && jsTemplate.isFile()) {
+        if (javascriptTemplate != null) {
+            if (javascriptTemplate.exists() && javascriptTemplate.isFile()) {
                 boolean foundMarker = false;
                 BufferedReader rdr = null;
                 try {
-                    rdr = new BufferedReader(new FileReader(jsTemplate));
+                    rdr = new BufferedReader(new FileReader(javascriptTemplate));
                     String line;
                     List<String> buffer = header;
                     while ((line = rdr.readLine()) != null ) {
@@ -314,10 +314,10 @@ public class CompileMojo extends AbstractMojo implements Runnable {
                     }
                 }
                 if (!foundMarker) {
-                    getLog().warn("Didn't find Hsoy Template marker (a line '//HSOY') inside template: " + jsTemplate.getAbsolutePath());
+                    getLog().warn("Didn't find Hsoy Template marker (a line '//HSOY') inside template: " + javascriptTemplate.getAbsolutePath());
                 }
             } else {
-                getLog().warn("Can't read JS Template, file doesn't exist or not a file: " + jsTemplate.getAbsolutePath());
+                getLog().warn("Can't read JS Template, file doesn't exist or not a file: " + javascriptTemplate.getAbsolutePath());
             }
         }
         Writer writer = null;
@@ -448,7 +448,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
         this.javaClass = javaClass;
     }
 
-    public void setJsTemplate(File jsTemplate) {
-        this.jsTemplate = jsTemplate;
+    public void setJavascriptTemplate(File javascriptTemplate) {
+        this.javascriptTemplate = javascriptTemplate;
     }
 }
