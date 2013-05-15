@@ -61,7 +61,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
      *
      * @parameter property="outputJavascriptFile"
      */
-    private File outputJavascriptFile;
+    private File outputJavascriptFile = null;
 
     /**
      * Output Javascript dir
@@ -116,7 +116,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
     /**
      * Setup class name for generated Java classes
      *
-     * @parameter property="javaClass" default-value="HsoyTemplates"
+     * @parameter property="javaClass"
      */
     private String javaClass = null;
 
@@ -189,64 +189,69 @@ public class CompileMojo extends AbstractMojo implements Runnable {
 
         this.watch = files;
 
-        HsoyJsCompiler hsoyJsCompiler = new HsoyJsCompiler();
-        SoyFileSet soyAllFilesSet;
-        this.lastCompiled = new Date();
-        try {
-            soyAllFilesSet = hsoyJsCompiler.build(files);
-        } catch (HsoyFormatException e) {
-            getLog().error("Invalid hsoy format", e);
-            return;
-        } catch (JHamlParseException e) {
-            getLog().error("Invalid HAML format", e);
-            return;
-        } catch (IOException e) {
-            getLog().error("Can't read files", e);
-            return;
-        }
-
         boolean joinJs = generateJavascript && outputJavascriptFile != null;
-        boolean joinJava = generateJava && outputJavaDir != null && StringUtils.isNotEmpty(javaClass);
-        List<SoyFileSet> soys = new ArrayList<SoyFileSet>(files.size());
-        String base = new File(inputFiles.getDirectory()).getAbsolutePath();
+        boolean joinJava = generateJava && StringUtils.isNotEmpty(javaClass);
+        boolean joinAny = joinJava || joinJs;
+        boolean joinAll = joinJava && joinJs;
 
-        for (File file: files) {
-            SoyFileSet soy = null;
+        HsoyJsCompiler hsoyJsCompiler = new HsoyJsCompiler();
+        this.lastCompiled = new Date();
+        if (joinAny) {
+            SoyFileSet soyAllFilesSet = null;
             try {
-                soy = hsoyJsCompiler.build(file);
-                soys.add(soy);
+                soyAllFilesSet = hsoyJsCompiler.build(files);
             } catch (HsoyFormatException e) {
                 getLog().error("Invalid hsoy format", e);
+                return;
             } catch (JHamlParseException e) {
                 getLog().error("Invalid HAML format", e);
+                return;
             } catch (IOException e) {
                 getLog().error("Can't read files", e);
+                return;
             }
-            if (soy != null) {
-                if (!joinJs) {
-                    compileJs(soy, targetFile(file, outputJavascriptDir, generateFilename(file.getName(), ".js")));
-                }
-                if (!joinJava) {
-                    String dir = file.getParentFile().getAbsolutePath();
-                    String relativeDir = dir.substring(base.length() + 1);
-                    String subpackage = null;
-                    if (relativeDir.length() > 1) {
-                        subpackage = relativeDir.replaceAll(File.separator, ".");
-                    }
-                    String justName = file.getName().substring(0, file.getName().indexOf('.'));
-                    String javaClass = StringUtils.capitalize(justName);
-                    compileJava(soy, subpackage, javaClass);
-                }
-            } else {
-                getLog().warn("Skip compilation for " + file.getName());
+
+            if (joinJs) {
+                compileJs(soyAllFilesSet);
+            }
+            if (joinJava) {
+                compileJava(soyAllFilesSet, null, javaClass);
             }
         }
 
-        if (joinJs) {
-            compileJs(soyAllFilesSet);
-        }
-        if (joinJava) {
-            compileJava(soyAllFilesSet, null, javaClass);
+        if (!joinAll) {
+            String base = new File(inputFiles.getDirectory()).getAbsolutePath();
+
+            for (File file: files) {
+                SoyFileSet soy = null;
+                try {
+                    soy = hsoyJsCompiler.build(file);
+                } catch (HsoyFormatException e) {
+                    getLog().error("Invalid hsoy format", e);
+                } catch (JHamlParseException e) {
+                    getLog().error("Invalid HAML format", e);
+                } catch (IOException e) {
+                    getLog().error("Can't read files", e);
+                }
+                if (soy != null) {
+                    if (!joinJs) {
+                        compileJs(soy, targetFile(file, outputJavascriptDir, generateFilename(file.getName(), ".js")));
+                    }
+                    if (!joinJava) {
+                        String dir = file.getParentFile().getAbsolutePath();
+                        String relativeDir = dir.substring(base.length() + 1);
+                        String subpackage = null;
+                        if (relativeDir.length() > 1) {
+                            subpackage = relativeDir.replaceAll(File.separator, ".");
+                        }
+                        String justName = file.getName().substring(0, file.getName().indexOf('.'));
+                        String javaClass = StringUtils.capitalize(justName);
+                        compileJava(soy, subpackage, javaClass);
+                    }
+                } else {
+                    getLog().warn("Skip compilation for " + file.getName());
+                }
+            }
         }
     }
 
@@ -314,7 +319,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
                     }
                 }
                 if (!foundMarker) {
-                    getLog().warn("Didn't find Hsoy Template marker (a line '//HSOY') inside template: " + javascriptTemplate.getAbsolutePath());
+                    getLog().warn("Didn't find Hsoy Template marker (a line '$hsoy.body') inside template: " + javascriptTemplate.getAbsolutePath());
                 }
             } else {
                 getLog().warn("Can't read JS Template, file doesn't exist or not a file: " + javascriptTemplate.getAbsolutePath());
@@ -365,6 +370,7 @@ public class CompileMojo extends AbstractMojo implements Runnable {
         if (this.outputJavaDir == null) {
             this.outputJavaDir = new File(basedir, "src/main/java");
         }
+        getLog().info("Package name: " + packageName);
         File outputJavaDir = new File(this.outputJavaDir, packageName.replaceAll("\\.", File.separator));
 
         if (!outputJavaDir.exists()) {
