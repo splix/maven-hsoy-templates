@@ -60,6 +60,13 @@ Or you can compile Hsoy Templates to JS w/o compiling whole project:
 mvn hsoy-templates:compile
 ```
 
+Modules
+-------
+
+  * Hsoy Templates Core - https://github.com/splix/hsoy-templates
+  * Maven Plugin - https://github.com/splix/maven-hsoy-templates
+  * Grails Plugin - https://github.com/splix/grails-hsoy-templates
+
 License
 -------
 
